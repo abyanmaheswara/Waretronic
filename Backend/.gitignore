@@ -1,0 +1,39 @@
+# Node modules
+/Backend/node_modules
+/Frontend/node_modules # Tambahkan ini jika ada folder node_modules di Frontend
+
+# Environment variables
+.env
+/Backend/.env # Penting: pastikan ini mengacu pada .env di folder Backend
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE and editor files
+.idea/
+.vscode/
+*.iml
+*.out
+*.sublime-project
+*.sublime-workspace
+
+# Build artifacts (if you have them)
+/build/
+/dist/
+/tmp/
+
+# VS Code workspace file
+Frontend/Website.code-workspace
+
+# Image related (if too many large images, consider if all are needed or optimize them)
+# *.psd
+# *.xcf
+# *.ai

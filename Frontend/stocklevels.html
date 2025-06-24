@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WARETRONIC - Tingkat Stok</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        background-color: #f4f6fa;
+        color: #333;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+      }
+      .sidebar {
+        width: 240px;
+        background: #fff;
+        height: 100vh;
+        position: fixed;
+        padding: 1rem;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+        transform: translateX(0);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+      }
+      .sidebar.hidden {
+        transform: translateX(-240px);
+      }
+      .sidebar-content {
+        flex-grow: 1;
+        overflow-y: auto; /* Memungkinkan scroll jika item menu banyak */
+      }
+      .sidebar h1 {
+        font-size: 1.2rem;
+        margin-bottom: 1rem; /* Sedikit dikurangi */
+        color: #2f80ed;
+        padding: 0 0.5rem; /* Padding agar sejajar dengan item menu */
+      }
+      .sidebar-profile {
+        padding: 0 0.5rem; /* Adjust padding to match sidebar overall padding */
+        margin-bottom: 1rem;
+      }
+      .sidebar-profile p {
+        margin: 0;
+        color: #555;
+      }
+      .sidebar-username {
+        font-weight: 600;
+        color: #333;
+      }
+      .sidebar a {
+        display: block;
+        padding: 0.75rem 1rem;
+        margin: 0.25rem 0; /* Margin disesuaikan */
+        color: #333;
+        text-decoration: none;
+        font-weight: 500;
+        border-radius: 6px;
+        font-size: 0.95rem; /* Sedikit disesuaikan */
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        background-color: #e8f4ff;
+        color: #2f80ed;
+      }
+      .sidebar-group > a.has-submenu.active {
+        background-color: #e8f4ff;
+        color: #2f80ed;
+      }
+
+      .submenu {
+        margin-left: 1rem;
+        display: none;
+        flex-direction: column;
+        transition: max-height 0.3s ease-out; /* Menggunakan max-height untuk transisi */
+        max-height: 0;
+        overflow: hidden;
+      }
+      .submenu a {
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem; /* Padding disesuaikan */
+        margin: 0.1rem 0;
+        color: #555; /* Warna sedikit lebih gelap untuk keterbacaan */
+      }
+      .submenu a.active {
+        background-color: #ddeeff; /* Warna berbeda untuk submenu aktif */
+        color: #2f80ed;
+        font-weight: 600;
+      }
+      .submenu.show {
+        display: flex;
+        max-height: 500px; /* Sesuaikan dengan tinggi maksimal konten submenu */
+      }
+      .logo-container {
+        padding: 1rem 0; /* Padding di atas dan bawah logo */
+        text-align: center;
+        margin-top: auto; /* Mendorong logo ke bawah jika sidebar flex */
+      }
+      .logo-img {
+        max-width: 120px; /* Ukuran logo disesuaikan */
+        height: auto;
+      }
+
+      .main {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: 100vh;
+        padding: 1.5rem 2rem; /* Padding disesuaikan */
+        margin-left: 240px;
+        transition: margin-left 0.3s ease;
+      }
+      .main.full {
+        margin-left: 0;
+      }
+
+      /* Header Halaman */
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+      .page-header .title-area {
+        display: flex;
+        align-items: center;
+      }
+      .page-header h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        color: #333;
+      }
+      .page-header .breadcrumb {
+        font-size: 1.1rem;
+        color: #555;
+        margin-left: 0.5rem;
+      }
+      .page-header .item-count-badge {
+        background-color: #e0e7ff;
+        color: #4f46e5;
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-left: 0.75rem;
+      }
+      .page-actions button {
+        background-color: #4f46e5; /* Warna biru Waretronic */
+        color: white;
+        border: none;
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background-color 0.2s ease;
+      }
+      .page-actions button:hover {
+        background-color: #4338ca;
+      }
+      .page-actions button.secondary {
+        background-color: #fff;
+        color: #4f46e5;
+        border: 1px solid #4f46e5;
+        margin-left: 0.5rem;
+      }
+      .page-actions button.secondary:hover {
+        background-color: #f0f5ff;
+      }
+      .page-actions img {
+        height: 16px;
+        width: 16px;
+      }
+
+      /* Filter Bar */
+      .filter-bar {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        background-color: #fff;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      .filter-bar .search-input {
+        display: flex;
+        align-items: center;
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        flex-grow: 1;
+      }
+      .filter-bar .search-input img {
+        height: 18px;
+        width: 18px;
+        margin-right: 0.5rem;
+        opacity: 0.5;
+      }
+      .filter-bar .search-input input {
+        border: none;
+        background: transparent;
+        outline: none;
+        width: 100%;
+        font-size: 0.9rem;
+      }
+      .filter-bar select,
+      .filter-bar .filter-button {
+        padding: 0.6rem 0.8rem;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        background-color: #fff;
+        font-size: 0.9rem;
+        min-width: 150px;
+      }
+      .filter-bar .filter-button {
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .filter-bar .filter-button img {
+        height: 16px;
+        width: 16px;
+      }
+
+      /* Table Styling */
+      .table-panel {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        overflow-x: auto;
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .table th,
+      .table td {
+        padding: 0.9rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 0.875rem;
+        white-space: nowrap;
+      }
+      .table th {
+        background: #f9fafb;
+        font-weight: 600;
+        color: #4b5563;
+      }
+      .table td {
+        color: #374151;
+      }
+      .table td.item-code {
+        color: #4f46e5;
+        font-weight: 500;
+      }
+      .table .action-icons img {
+        height: 20px;
+        width: 20px;
+        cursor: pointer;
+        opacity: 0.7;
+        margin-left: 0.5rem;
+      }
+      .table .action-icons img:hover {
+        opacity: 1;
+      }
+
+      /* Pagination */
+      .pagination-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        font-size: 0.9rem;
+        color: #6b7280;
+      }
+      .pagination-buttons button {
+        background-color: #fff;
+        border: 1px solid #d1d5db;
+        color: #374151;
+        padding: 0.5rem 0.8rem;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-left: 0.25rem;
+      }
+      .pagination-buttons button:hover {
+        background-color: #f9fafb;
+      }
+      .pagination-buttons button.active {
+        background-color: #e0e7ff;
+        border-color: #a5b4fc;
+        color: #4f46e5;
+        font-weight: 600;
+      }
+      .pagination-buttons button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Summary Cards (Bottom) */
+      .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+      .summary-card {
+        background: #fff;
+        padding: 1.25rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        text-align: center;
+      }
+      .summary-card h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.9rem;
+        color: #6b7280;
+        font-weight: 500;
+      }
+      .summary-card .count {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #1f2937;
+      }
+      .summary-card.low-stock .count {
+        color: #f59e0b;
+      }
+      .summary-card.out-of-stock .count {
+        color: #ef4444;
+      }
+
+      /* Top bar & user actions */
+      .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+      }
+      .menu-toggle {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #333;
+        padding: 0.5rem;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .notification {
+        position: relative;
+        cursor: pointer;
+      }
+      .notification img {
+        width: 24px;
+      }
+      .notification .dot {
+        position: absolute;
+        top: 0px;
+        right: -2px;
+        height: 10px;
+        width: 10px;
+        background-color: red;
+        border-radius: 50%;
+        border: 2px solid white;
+      }
+      .admin-button {
+        display: flex;
+        align-items: center;
+        background-color: #fff;
+        border-radius: 20px;
+        padding: 4px 10px 4px 4px;
+        border: 1px solid #d1d5db;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+      .admin-button .avatar {
+        background-color: #4f46e5;
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+      }
+      .admin-button .avatar img {
+        width: 16px;
+      }
+      .dropdown-menu {
+        display: none;
+        position: absolute;
+        background-color: #fff;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+        border-radius: 8px;
+        right: 0;
+        top: 100%;
+        margin-top: 5px;
+      }
+      .dropdown-menu a {
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        font-weight: normal;
+        border-radius: 8px;
+      }
+      .dropdown-menu a:hover {
+        background-color: #f1f1f1;
+      }
+
+      /* Responsive */
+      @media (max-width: 992px) {
+        .filter-bar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .filter-bar select,
+        .filter-bar .filter-button {
+          min-width: 0;
+          width: 100%;
+        }
+      }
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+        .sidebar.hidden {
+          transform: translateX(-100%);
+        }
+        .sidebar:not(.hidden) {
+          transform: translateX(0);
+        }
+        .main {
+          margin-left: 0;
+          padding: 1rem 1.5rem;
+        }
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.75rem;
+        }
+        .page-header .title-area {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .page-header .breadcrumb,
+        .page-header .item-count-badge {
+          margin-left: 0;
+          margin-top: 0.25rem;
+        }
+        .page-actions {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        .page-actions button {
+          width: 100%;
+          margin-left: 0 !important;
+        }
+        .summary-cards {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Modal Styles (for Stock Adjustment) */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1001;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+        box-sizing: border-box;
+      }
+      .modal-content {
+        background-color: #fefefe;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+        animation-name: animatetop;
+        animation-duration: 0.4s;
+      }
+      @keyframes animatetop {
+        from {
+          top: -300px;
+          opacity: 0;
+        }
+        to {
+          top: 0;
+          opacity: 1;
+        }
+      }
+      .close-button {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.2s ease;
+      }
+      .close-button:hover,
+      .close-button:focus {
+        color: #333;
+      }
+      .modal h3 {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        color: #2f80ed;
+        font-size: 1.8rem;
+        text-align: center;
+      }
+      .modal form label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #555;
+        font-size: 0.95rem;
+      }
+      .modal form input[type="number"],
+      .modal form textarea,
+      .modal form select {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-family: "Inter", sans-serif;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+      }
+      .modal form button {
+        background: #2ecc71;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: background-color 0.2s ease;
+        margin-right: 0.5rem;
+      }
+      .modal form button:hover {
+        background-color: #27ae60;
+      }
+      .modal form button.cancel {
+        background: #ccc;
+        color: #333;
+      }
+      .modal form button.cancel:hover {
+        background-color: #bbb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-content">
+        <h1>🔷 WARETRONIC</h1>
+        <div class="sidebar-profile">
+          <p class="sidebar-username">Admin User</p>
+          <p class="sidebar-email">admin@waretronic.com</p>
+        </div>
+        <a href="index.html">Dashboard</a>
+        <div class="sidebar-group">
+          <a href="#" class="has-submenu active" onclick="toggleSubmenu(event)">Inventory ▸</a>
+          <div class="submenu show">
+            <a href="masteritem.html">Master Item</a>
+            <a href="stocklevels.html" class="active">Stock Levels</a>
+          </div>
+        </div>
+        <a href="transactions.html">Transactions</a>
+        <a href="warehouses.html">Warehouses</a>
+        <a href="reports.html">Reports</a>
+        <a href="settings.html">Settings</a>
+      </div>
+      <div class="logo-container">
+        <img src="img/logo.png" alt="Logo WARETRONIC" class="logo-img" />
+      </div>
+    </div>
+
+    <div class="main" id="main">
+      <div class="top-bar">
+        <div style="display: flex; align-items: center">
+          <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        </div>
+        <div class="top-actions">
+          <div class="notification">
+            <img src="img/Bell_pin.svg" alt="lonceng notifikasi" />
+            <span class="dot"></span>
+          </div>
+          <div class="dropdown">
+            <button class="admin-button" onclick="toggleDropdown()">
+              <div class="avatar">
+                <img src="img/Group 2252.svg" alt="ikon admin" />
+              </div>
+              <span id="usernameDisplay">Admin</span>
+            </button>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a href="settings.html">⚙️ Settings</a>
+              <a href="#" onclick="logout()">🚪 Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-header">
+        <div class="title-area">
+          <h2>Inventory</h2>
+          <span class="breadcrumb">/ Stock Levels</span>
+          <span class="item-count-badge" id="totalStockEntries">0 Entries</span>
+        </div>
+        <div class="page-actions">
+          <button onclick="openStockAdjustmentModal()"><img src="img/icon-adjust.svg" alt="sesuaikan stok" /> Penyesuaian Stok</button>
+          <button class="secondary" onclick="loadStockLevels()"><img src="img/icon-refresh.svg" alt="segarkan" /> Segarkan Data</button>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="search-input">
+          <img src="img/icon-search.svg" alt="cari" />
+          <input type="text" id="searchInput" placeholder="Cari Items..." />
+        </div>
+        <select id="warehouseFilter">
+          <option value="">Semua Gudang</option>
+        </select>
+        <select id="zoneFilter">
+          <option value="">Semua Zona</option>
+        </select>
+        <select id="categoryFilter">
+          <option value="">Semua Kategori</option>
+        </select>
+        <button class="filter-button" id="applyFilters"><img src="img/icon-filter.svg" alt="filter" /> Terapkan Filter</button>
+      </div>
+
+      <div class="table-panel">
+        <table class="table" id="stockLevelsTable">
+          <thead>
+            <tr>
+              <th data-sort="sku">
+                KODE ITEM
+                <img src="img/icon-sort.svg" alt="urutkan" style="height: 12px; vertical-align: middle; margin-left: 4px; cursor: pointer" />
+              </th>
+              <th data-sort="itemName">
+                NAMA ITEM
+                <img src="img/icon-sort.svg" alt="urutkan" style="height: 12px; vertical-align: middle; margin-left: 4px; cursor: pointer" />
+              </th>
+              <th>VARIAN</th>
+              <th data-sort="warehouseName">GUDANG</th>
+              <th data-sort="zoneName">ZONA</th>
+              <th data-sort="available">
+                TERSEDIA
+                <img src="img/icon-info.svg" alt="info" style="height: 12px; vertical-align: middle; margin-left: 4px" />
+              </th>
+              <th data-sort="reserved">
+                DIPESAN
+                <img src="img/icon-info.svg" alt="info" style="height: 12px; vertical-align: middle; margin-left: 4px" />
+              </th>
+              <th data-sort="quantity">
+                JUMLAH
+                <img src="img/icon-info.svg" alt="info" style="height: 12px; vertical-align: middle; margin-left: 4px" />
+              </th>
+              <th>AKSI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="9" style="text-align: center; padding: 20px">Memuat data stok...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination-controls">
+        <span id="paginationInfo">Menampilkan 0 sampai 0 dari 0 hasil</span>
+        <div class="pagination-buttons">
+          <button id="prevPage">Sebelumnya</button>
+          <span id="pageNumbers"></span>
+          <button id="nextPage">Berikutnya</button>
+        </div>
+      </div>
+
+      <div class="summary-cards">
+        <div class="summary-card">
+          <h4>Total Item Unik</h4>
+          <div class="count" id="totalUniqueItems">0</div>
+        </div>
+        <div class="summary-card">
+          <h4>Jumlah Stok Total</h4>
+          <div class="count" id="totalQuantity">0</div>
+        </div>
+        <div class="summary-card low-stock">
+          <h4>Item Stok Rendah</h4>
+          <div class="count" id="lowStockCount">0</div>
+        </div>
+        <div class="summary-card out-of-stock">
+          <h4>Stok Habis</h4>
+          <div class="count" id="outOfStockCount">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="stockAdjustmentModal" class="modal">
+      <div class="modal-content">
+        <span class="close-button" onclick="closeStockAdjustmentModal()">&times;</span>
+        <h3>Penyesuaian Stok</h3>
+        <form id="adjustmentForm">
+          <label for="adjItem">Item:</label>
+          <select id="adjItem" required></select>
+
+          <label for="adjWarehouse">Gudang:</label>
+          <select id="adjWarehouse" required></select>
+
+          <label for="adjZone">Zona (Opsional):</label>
+          <select id="adjZone">
+            <option value="">Pilih Zona</option>
+          </select>
+
+          <label for="adjType">Jenis Penyesuaian:</label>
+          <select id="adjType" required>
+            <option value="in">Penambahan (+)</option>
+            <option value="out">Pengurangan (-)</option>
+          </select>
+
+          <label for="adjQuantity">Jumlah:</label>
+          <input type="number" id="adjQuantity" min="1" required />
+
+          <label for="adjReason">Alasan:</label>
+          <textarea id="adjReason" rows="3"></textarea>
+
+          <button type="submit">Lakukan Penyesuaian</button>
+          <button type="button" class="cancel" onclick="closeStockAdjustmentModal()">Batal</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // --- Global Variables ---
+      let allStockData = []; // Menyimpan semua data stok yang diambil
+      let filteredStockData = []; // Menyimpan data stok yang sudah difilter/cari
+      let currentStockPage = 1;
+      const stocksPerPage = 10; // Jumlah entri stok per halaman
+      let currentSortColumn = null;
+      let currentSortDirection = "asc"; // 'asc' or 'desc'
+
+      // --- Inisialisasi Saat Dokumen Dimuat ---
+      document.addEventListener("DOMContentLoaded", () => {
+        // Autentikasi Awal
+        if (!localStorage.getItem("token")) {
+          alert("Anda belum login. Silakan login dulu.");
+          window.location.href = "loginandregister.html";
+          return;
+        }
+
+        // Inisialisasi UI dan Data
+        loadUserInfo();
+        loadStockLevels(); // Muat data Stock Levels
+        initEventListeners();
+
+        // Pastikan sidebar terlihat dan link aktif di halaman ini
+        const sidebar = document.getElementById("sidebar");
+        const main = document.getElementById("main");
+        sidebar.classList.remove("hidden");
+        main.classList.remove("full");
+
+        const inventorySubmenuLink = document.querySelector(".sidebar-group > a.has-submenu");
+        const inventorySubmenu = document.querySelector(".sidebar-group .submenu");
+        if (inventorySubmenuLink && inventorySubmenu) {
+          inventorySubmenu.classList.add("show");
+          inventorySubmenuLink.innerHTML = inventorySubmenuLink.innerHTML.replace("▸", "▾");
+          inventorySubmenuLink.classList.add("active");
+        }
+      });
+
+      // --- Fungsi Autentikasi dan Utilitas Fetch ---
+      async function fetchData(url, options = {}) {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("No authentication token found. Redirecting to login.");
+          window.location.href = "loginandregister.html";
+          return null;
+        }
+        options.headers = {
+          ...options.headers,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": options.body ? "application/json" : undefined,
+        };
+        try {
+          const res = await fetch(url, options);
+          if (!res.ok) {
+            if (res.status === 401 || res.status === 403) {
+              alert("Sesi kadaluarsa atau tidak berwenang. Silakan login kembali.");
+              logout();
+              return null;
+            }
+            const errorText = await res.text();
+            console.error(`HTTP error! status: ${res.status}, body: ${errorText}`);
+            throw new Error(`HTTP error! status: ${res.status} - ${errorText}`);
+          }
+          return await res.json();
+        } catch (err) {
+          console.error(`❌ Error fetching ${url}:`, err);
+          alert("Terjadi kesalahan: " + err.message);
+          return null;
+        }
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("username");
+        localStorage.removeItem("email");
+        window.location.href = "loginandregister.html";
+      }
+
+      // --- Sidebar & Dropdown Toggle Functions ---
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const main = document.getElementById("main");
+        sidebar.classList.toggle("hidden");
+        main.classList.toggle("full");
+      }
+
+      function toggleSubmenu(event) {
+        event.preventDefault();
+        const submenu = event.target.nextElementSibling;
+        const allSubmenus = document.querySelectorAll(".sidebar .submenu");
+
+        allSubmenus.forEach((sm) => {
+          if (sm !== submenu && sm.classList.contains("show")) {
+            sm.classList.remove("show");
+            const otherParentLink = sm.previousElementSibling;
+            if (otherParentLink) {
+              otherParentLink.innerHTML = otherParentLink.innerHTML.replace("▾", "▸");
+            }
+          }
+        });
+
+        submenu.classList.toggle("show");
+        const parentLink = event.target;
+        if (submenu.classList.contains("show")) {
+          parentLink.innerHTML = parentLink.innerHTML.replace("▸", "▾");
+        } else {
+          parentLink.innerHTML = parentLink.innerHTML.replace("▾", "▸");
+        }
+      }
+
+      function toggleDropdown() {
+        const menu = document.getElementById("dropdownMenu");
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+      }
+
+      window.addEventListener("click", function (e) {
+        const dropdown = document.querySelector(".dropdown");
+        if (dropdown && !dropdown.contains(e.target)) {
+          document.getElementById("dropdownMenu").style.display = "none";
+        }
+      });
+
+      // --- Load User Info (from localStorage) ---
+      function loadUserInfo() {
+        const storedUsername = localStorage.getItem("username");
+        const storedEmail = localStorage.getItem("email");
+
+        if (storedUsername) {
+          document.getElementById("usernameDisplay").textContent = storedUsername;
+          document.querySelector(".sidebar-username").textContent = storedUsername;
+        }
+        if (storedEmail) {
+          document.querySelector(".sidebar-email").textContent = storedEmail;
+        }
+      }
+
+      // --- Stock Levels Functionality ---
+      async function loadStockLevels() {
+        const stockTableBody = document.querySelector("#stockLevelsTable tbody");
+        const totalStockEntriesSpan = document.getElementById("totalStockEntries");
+        const totalUniqueItemsSpan = document.getElementById("totalUniqueItems");
+        const totalQuantitySpan = document.getElementById("totalQuantity");
+        const lowStockCountSpan = document.getElementById("lowStockCount");
+        const outOfStockCountSpan = document.getElementById("outOfStockCount");
+
+        stockTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">Memuat data stok...</td></tr>';
+        totalStockEntriesSpan.textContent = "Memuat...";
+        totalUniqueItemsSpan.textContent = "Memuat...";
+        totalQuantitySpan.textContent = "Memuat...";
+        lowStockCountSpan.textContent = "Memuat...";
+        outOfStockCountSpan.textContent = "Memuat...";
+
+        const stockData = await fetchData("http://localhost:5000/api/stocks"); // Endpoint for all stock entries
+        if (stockData) {
+          allStockData = stockData;
+          applyFiltersAndSort(); // Apply filters and sort after loading
+          populateFilters(stockData); // Populate filter dropdowns
+          updateSummaryCards(stockData); // Update summary cards
+        } else {
+          stockTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">Gagal memuat data stok.</td></tr>';
+          totalStockEntriesSpan.textContent = "0 Entries";
+          totalUniqueItemsSpan.textContent = "0";
+          totalQuantitySpan.textContent = "0";
+          lowStockCountSpan.textContent = "0";
+          outOfStockCountSpan.textContent = "0";
+          allStockData = [];
+          filteredStockData = [];
+          renderPagination();
+        }
+      }
+
+      function populateFilters(data) {
+        const warehouseFilter = document.getElementById("warehouseFilter");
+        const zoneFilter = document.getElementById("zoneFilter");
+        const categoryFilter = document.getElementById("categoryFilter");
+
+        const warehouses = new Set();
+        const zones = new Set();
+        const categories = new Set();
+
+        data.forEach((stock) => {
+          if (stock.warehouse && stock.warehouse.name) warehouses.add(stock.warehouse.name);
+          if (stock.zone && stock.zone.name) zones.add(stock.zone.name);
+          if (stock.item && stock.item.category) categories.add(stock.item.category);
+        });
+
+        // Clear previous options
+        warehouseFilter.innerHTML = '<option value="">Semua Gudang</option>';
+        zoneFilter.innerHTML = '<option value="">Semua Zona</option>';
+        categoryFilter.innerHTML = '<option value="">Semua Kategori</option>';
+
+        warehouses.forEach((name) => {
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          warehouseFilter.appendChild(option);
+        });
+        zones.forEach((name) => {
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          zoneFilter.appendChild(option);
+        });
+        categories.forEach((name) => {
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          categoryFilter.appendChild(option);
+        });
+      }
+
+      function applyFiltersAndSort() {
+        const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+        const selectedWarehouse = document.getElementById("warehouseFilter").value;
+        const selectedZone = document.getElementById("zoneFilter").value;
+        const selectedCategory = document.getElementById("categoryFilter").value;
+
+        filteredStockData = allStockData.filter((stock) => {
+          const matchesSearch = stock.item?.name?.toLowerCase().includes(searchTerm) || stock.item?.sku?.toLowerCase().includes(searchTerm);
+          const matchesWarehouse = selectedWarehouse === "" || stock.warehouse?.name === selectedWarehouse;
+          const matchesZone = selectedZone === "" || stock.zone?.name === selectedZone;
+          const matchesCategory = selectedCategory === "" || stock.item?.category === selectedCategory;
+
+          return matchesSearch && matchesWarehouse && matchesZone && matchesCategory;
+        });
+
+        sortStockData(currentSortColumn, currentSortDirection); // Apply current sort
+        currentStockPage = 1; // Reset page after filtering
+        renderStockTable();
+        renderPagination();
+      }
+
+      function sortStockData(column, direction) {
+        if (!column) return; // No column to sort by
+
+        filteredStockData.sort((a, b) => {
+          let valA, valB;
+
+          switch (column) {
+            case "sku":
+              valA = a.item?.sku || "";
+              valB = b.item?.sku || "";
+              break;
+            case "itemName":
+              valA = a.item?.name || "";
+              valB = b.item?.name || "";
+              break;
+            case "warehouseName":
+              valA = a.warehouse?.name || "";
+              valB = b.warehouse?.name || "";
+              break;
+            case "zoneName":
+              valA = a.zone?.name || "";
+              valB = b.zone?.name || "";
+              break;
+            case "available":
+              valA = a.available || 0;
+              valB = b.available || 0;
+              break;
+            case "reserved":
+              valA = a.reserved || 0;
+              valB = b.reserved || 0;
+              break;
+            case "quantity":
+              valA = a.quantity || 0;
+              valB = b.quantity || 0;
+              break;
+            default:
+              return 0;
+          }
+
+          if (typeof valA === "string") {
+            return direction === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+          } else {
+            // Assume number
+            return direction === "asc" ? valA - valB : valB - valA;
+          }
+        });
+      }
+
+      function renderStockTable() {
+        const stockTableBody = document.querySelector("#stockLevelsTable tbody");
+        stockTableBody.innerHTML = ""; // Clear table
+
+        const startIndex = (currentStockPage - 1) * stocksPerPage;
+        const endIndex = startIndex + stocksPerPage;
+        const stocksToDisplay = filteredStockData.slice(startIndex, endIndex);
+
+        if (stocksToDisplay.length > 0) {
+          stocksToDisplay.forEach((stock) => {
+            const row = stockTableBody.insertRow();
+            row.innerHTML = `
+              <td class="item-code">${stock.item?.sku || "N/A"}</td>
+              <td>${stock.item?.name || "N/A"}</td>
+              <td>${(stock.item?.variants || []).map((v) => (typeof v === "object" ? v.name || v.value || v.serial : v) || "").join(", ") || "N/A"}</td>
+              <td>${stock.warehouse?.name || "N/A"}</td>
+              <td>${stock.zone?.name || "N/A"}</td>
+              <td>${stock.available || 0}</td>
+              <td>${stock.reserved || 0}</td>
+              <td>${stock.quantity || 0}</td>
+              <td class="action-icons">
+                <img src="img/icon-history.svg" alt="riwayat" title="Lihat Riwayat Stok" onclick="viewStockHistory('${stock._id}')" />
+                <img src="img/icon-eye.svg" alt="lihat" title="Lihat Detail Stok" onclick="viewStockDetail('${stock._id}')" />
+              </td>
+            `;
+          });
+        } else {
+          stockTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">Tidak ada data stok ditemukan.</td></tr>';
+        }
+        document.getElementById("totalStockEntries").textContent = `${filteredStockData.length} Entries`;
+        renderPagination();
+      }
+
+      function renderPagination() {
+        const totalPages = Math.ceil(filteredStockData.length / stocksPerPage);
+        const pageNumbersContainer = document.getElementById("pageNumbers");
+        const paginationInfo = document.getElementById("paginationInfo");
+
+        pageNumbersContainer.innerHTML = "";
+        paginationInfo.textContent = `Menampilkan ${Math.min(filteredStockData.length, (currentStockPage - 1) * stocksPerPage + 1)} sampai ${Math.min(filteredStockData.length, currentStockPage * stocksPerPage)} dari ${
+          filteredStockData.length
+        } hasil`;
+
+        if (totalPages > 1) {
+          for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement("button");
+            btn.textContent = i;
+            btn.classList.add("page-btn");
+            if (i === currentStockPage) {
+              btn.classList.add("active");
+            }
+            btn.onclick = () => {
+              currentStockPage = i;
+              renderStockTable();
+            };
+            pageNumbersContainer.appendChild(btn);
+          }
+        }
+
+        document.getElementById("prevPage").disabled = currentStockPage === 1;
+        document.getElementById("nextPage").disabled = currentStockPage === totalPages || totalPages === 0;
+        document.getElementById("prevPage").onclick = () => {
+          if (currentStockPage > 1) {
+            currentStockPage--;
+            renderStockTable();
+          }
+        };
+        document.getElementById("nextPage").onclick = () => {
+          if (currentStockPage < totalPages) {
+            currentStockPage++;
+            renderStockTable();
+          }
+        };
+      }
+
+      function updateSummaryCards(data) {
+        const uniqueItems = new Set(data.map((s) => s.item?._id)).size;
+        const totalQty = data.reduce((sum, s) => sum + (s.quantity || 0), 0);
+        const lowStock = data.filter((s) => typeof s.quantity === "number" && typeof s.minimum === "number" && s.quantity < s.minimum).length;
+        const outOfStock = data.filter((s) => typeof s.quantity === "number" && s.quantity <= 0).length;
+
+        document.getElementById("totalUniqueItems").textContent = uniqueItems;
+        document.getElementById("totalQuantity").textContent = totalQty;
+        document.getElementById("lowStockCount").textContent = lowStock;
+        document.getElementById("outOfStockCount").textContent = outOfStock;
+      }
+
+      // --- Stock Adjustment Modal Functions ---
+      async function openStockAdjustmentModal() {
+        const modal = document.getElementById("stockAdjustmentModal");
+        document.getElementById("adjustmentForm").reset();
+        await populateAdjustmentForms(); // Load items, warehouses, zones
+        modal.style.display = "flex";
+      }
+
+      function closeStockAdjustmentModal() {
+        document.getElementById("stockAdjustmentModal").style.display = "none";
+      }
+
+      async function populateAdjustmentForms() {
+        const adjItemSelect = document.getElementById("adjItem");
+        const adjWarehouseSelect = document.getElementById("adjWarehouse");
+        const adjZoneSelect = document.getElementById("adjZone");
+
+        adjItemSelect.innerHTML = '<option value="">Pilih Item</option>';
+        adjWarehouseSelect.innerHTML = '<option value="">Pilih Gudang</option>';
+        adjZoneSelect.innerHTML = '<option value="">Pilih Zona (Opsional)</option>'; // Opsional
+
+        const items = await fetchData("http://localhost:5000/api/items");
+        if (items) {
+          items.forEach((item) => {
+            const option = document.createElement("option");
+            option.value = item._id;
+            option.textContent = `${item.name} (${item.sku || "N/A"})`;
+            adjItemSelect.appendChild(option);
+          });
+        }
+
+        const warehouses = await fetchData("http://localhost:5000/api/warehouses");
+        if (warehouses) {
+          warehouses.forEach((warehouse) => {
+            const option = document.createElement("option");
+            option.value = warehouse._id;
+            option.textContent = warehouse.name;
+            adjWarehouseSelect.appendChild(option);
+          });
+        }
+
+        const zones = await fetchData("http://localhost:5000/api/zones"); // Pastikan endpoint ini ada
+        if (zones) {
+          zones.forEach((zone) => {
+            const option = document.createElement("option");
+            option.value = zone._id;
+            option.textContent = zone.name;
+            adjZoneSelect.appendChild(option);
+          });
+        }
+      }
+
+      document.getElementById("adjustmentForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const itemId = document.getElementById("adjItem").value;
+        const warehouseId = document.getElementById("adjWarehouse").value;
+        const zoneId = document.getElementById("adjZone").value; // Bisa kosong
+        const adjustmentType = document.getElementById("adjType").value;
+        let quantity = parseInt(document.getElementById("adjQuantity").value, 10);
+        const reason = document.getElementById("adjReason").value;
+
+        if (!itemId || !warehouseId || isNaN(quantity) || quantity <= 0) {
+          alert("Harap pilih item, gudang, dan masukkan jumlah penyesuaian yang valid.");
+          return;
+        }
+
+        if (adjustmentType === "out") {
+          quantity = -quantity; // Negatifkan kuantitas jika pengurangan
+        }
+
+        const adjustmentData = {
+          item: itemId,
+          warehouse: warehouseId,
+          zone: zoneId || undefined, // Kirim undefined jika kosong
+          quantityChange: quantity, // Nama properti disesuaikan dengan backend
+          reason: reason,
+        };
+
+        // Asumsi endpoint untuk stock adjustments adalah POST /api/stock-adjustments
+        const result = await fetchData("http://localhost:5000/api/stock-adjustments", {
+          method: "POST",
+          body: JSON.stringify(adjustmentData),
+        });
+
+        if (result) {
+          alert("Penyesuaian stok berhasil!");
+          closeStockAdjustmentModal();
+          loadStockLevels(); // Refresh data stok
+        } else {
+          alert("Gagal melakukan penyesuaian stok.");
+        }
+      });
+
+      // Placeholder functions for action icons
+      function viewStockHistory(stockId) {
+        alert(`Melihat riwayat stok untuk ID: ${stockId}`);
+        // Implementasi navigasi ke halaman riwayat transaksi/stok atau modal detail
+      }
+
+      function viewStockDetail(stockId) {
+        alert(`Melihat detail stok untuk ID: ${stockId}`);
+        // Implementasi modal detail stok atau navigasi
+      }
+
+      // --- Event Listeners ---
+      function initEventListeners() {
+        // Filter & Search
+        document.getElementById("applyFilters").addEventListener("click", applyFiltersAndSort);
+        document.getElementById("searchInput").addEventListener("keyup", (event) => {
+          if (event.key === "Enter") {
+            applyFiltersAndSort();
+          }
+        });
+        document.getElementById("warehouseFilter").addEventListener("change", applyFiltersAndSort);
+        document.getElementById("zoneFilter").addEventListener("change", applyFiltersAndSort);
+        document.getElementById("categoryFilter").addEventListener("change", applyFiltersAndSort);
+
+        // Sorting by clicking table headers
+        document.querySelectorAll("#stockLevelsTable th[data-sort]").forEach((header) => {
+          header.addEventListener("click", () => {
+            const column = header.dataset.sort;
+            if (currentSortColumn === column) {
+              currentSortDirection = currentSortDirection === "asc" ? "desc" : "asc";
+            } else {
+              currentSortColumn = column;
+              currentSortDirection = "asc";
+            }
+            applyFiltersAndSort(); // Re-apply filters and sort
+          });
+        });
+      }
+    </script>
+  </body>
+</html>

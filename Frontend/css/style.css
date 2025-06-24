@@ -1,0 +1,116 @@
+/* styles.css */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  display: flex;
+}
+
+.container {
+  display: flex;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: #2c3e50;
+  color: white;
+  width: 250px;
+  height: 1000px;
+  transition: transform 0.3s ease;
+  justify-content: space-between;
+}
+
+.sidebar-button {
+  margin-left: 10px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.sidebar.closed {
+  transform: translateX(-100%);
+}
+.sidebar-button:hover {
+  background-color: #0056b3;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  align-items: center;
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  padding: 15px;
+}
+
+.sidebar ul li a {
+  color: white;
+  text-decoration: none;
+}
+
+.sidebar.hidden {
+  width: 0;
+  overflow: hidden;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center; /* Membuat logo berada di tengah */
+  margin-bottom: 20px; /* Jarak dari bagian bawah sidebar */
+}
+.logo {
+  width: 100px; /* Sesuaikan ukuran logo */
+  height: auto; /* Menjaga rasio aspek */
+}
+
+.content {
+  padding: 20px;
+  flex-grow: 1;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem;
+  border-radius: 8px;
+  z-index: 1001;
+}
+.dropdown-menu a {
+  display: block;
+  padding: 0.5rem;
+  color: #333;
+  text-decoration: none;
+}
+.dropdown-menu a:hover {
+  background: #f0f0f0;
+}
+
+#restockReportBtn {
+  background: #2f80ed;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  width: 100%;
+  text-align: center;
+}

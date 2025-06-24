@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waretronic Login/Register</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(to right, #004b8d, #0074d9);
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .background-svg {
+        position: absolute;
+        width: 111%;
+        height: 111%;
+        overflow: hidden;
+        z-index: 0;
+        /* Pastikan gambar SVG bisa mengisi area */
+        object-fit: cover;
+      }
+      /* Pastikan file SVG Anda (Glass Effect Login Page - Blue.svg)
+       berisi definisi gradien dan bentuk SVG yang ingin Anda tampilkan */
+
+      .container {
+        position: relative; /* Diubah dari absolute agar z-index bekerja relatif terhadap body */
+        z-index: 1;
+        width: 360px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 30px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+        text-align: center;
+      }
+
+      .logo {
+        width: 220px;
+        margin: -40px auto -50px;
+      }
+
+      h2 {
+        color: white;
+        margin-bottom: 20px;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem; /* Tambahkan agar ukuran font input konsisten */
+        font-family: inherit; /* Warisi font dari body */
+      }
+
+      button {
+        width: 100%;
+        padding: 10px;
+        background: #003f7f;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+        font-size: 1rem; /* Tambahkan agar ukuran font tombol konsisten */
+        font-family: inherit;
+        transition: background 0.3s ease; /* Efek hover */
+      }
+      button:hover {
+        background: #0056b3; /* Warna sedikit lebih terang saat hover */
+      }
+
+      .switch {
+        margin-top: 15px;
+        color: white;
+        font-size: 0.9em;
+        cursor: pointer;
+        text-decoration: underline; /* Beri indikasi bisa diklik */
+        transition: color 0.3s ease; /* Efek hover */
+      }
+      .switch:hover {
+        color: #add8e6; /* Warna lebih terang saat hover */
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <img src="img/Glass Effect Login Page - Blue.svg" alt="background" class="background-svg" />
+
+    <div class="container">
+      <img src="img/logo.png" alt="Logo" class="logo" />
+      <div id="loginForm">
+        <h2>Login</h2>
+        <input type="text" id="loginUsername" placeholder="Username" autocomplete="username" required />
+        <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required />
+
+        <button onclick="login()">Sign in</button>
+        <div class="switch" onclick="toggleForm()">Don't have an account? Register</div>
+      </div>
+
+      <div id="registerForm" class="hidden">
+        <h2>Register</h2>
+        <input type="email" id="regEmail" placeholder="Email" autocomplete="email" required />
+        <input type="text" id="regUsername" placeholder="Username" autocomplete="new-username" required />
+        <input type="text" id="regRole" placeholder="Role (e.g., Staf Ahli)" autocomplete="off" required />
+        <input type="password" id="regPassword" placeholder="Password" autocomplete="new-password" required />
+        <button onclick="register()">Registrasi</button>
+        <div class="switch" onclick="toggleForm()">Already have an account? Login</div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE_URL = "http://localhost:5000/api";
+
+      function toggleForm() {
+        document.getElementById("loginForm").classList.toggle("hidden");
+        document.getElementById("registerForm").classList.toggle("hidden");
+        // Opsional: reset form saat berganti mode
+        document.getElementById("loginForm").reset();
+        document.getElementById("registerForm").reset();
+      }
+
+      async function register() {
+        const email = document.getElementById("regEmail").value.trim(); // Gunakan email
+        const username = document.getElementById("regUsername").value.trim();
+        const password = document.getElementById("regPassword").value.trim();
+        const role = document.getElementById("regRole").value.trim();
+
+        // Basic validation
+        if (!email || !username || !password || !role) {
+          alert("Semua field wajib diisi.");
+          return;
+        }
+
+        try {
+          const res = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            // Pastikan properti body sesuai dengan yang diharapkan auth.controller.js
+            body: JSON.stringify({ username, email, password, role }), // Mengirim email
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            alert(data.message || "Registrasi berhasil! Silakan login.");
+            toggleForm(); // Pindah ke login form
+          } else {
+            alert(data.error || "Registrasi gagal.");
+          }
+        } catch (err) {
+          console.error("Error registrasi:", err);
+          alert("Terjadi kesalahan saat registrasi. Cek koneksi server.");
+        }
+      }
+
+      async function login() {
+        const username = document.getElementById("loginUsername").value.trim();
+        const password = document.getElementById("loginPassword").value.trim();
+
+        if (!username || !password) {
+          alert("Username dan Password wajib diisi.");
+          return;
+        }
+
+        try {
+          const res = await fetch("http://localhost:5000/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.token) {
+            // Periksa res.ok juga untuk status HTTP 2xx
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("username", data.username);
+            if (data.email) {
+              localStorage.setItem("email", data.email);
+            }
+            // Anda juga bisa menyimpan role atau data user lainnya jika diperlukan
+            // localStorage.setItem("userRole", data.role);
+            window.location.href = "index.html"; // Redirect ke dashboard setelah login
+          } else {
+            alert(data.error || "Login gagal. Periksa username dan password Anda.");
+          }
+        } catch (err) {
+          console.error("Error saat login:", err);
+          alert("Terjadi kesalahan saat login. Cek koneksi server.");
+        }
+      }
+
+      // Pastikan background SVG bekerja dengan baik
+      window.addEventListener("load", () => {
+        const bgSvg = document.querySelector(".background-svg");
+        if (bgSvg && bgSvg.src.includes("Glass Effect Login Page - Blue.svg")) {
+          // Jika SVG dimuat sebagai gambar, kita tidak perlu elemen <defs> atau <circle> di HTML
+          // Mereka harus ada di dalam file SVG itu sendiri.
+          // Jika file SVG hanya berisi dekorasi tanpa root <svg> tag atau tidak di-embed,
+          // itu mungkin tidak akan tampil dengan benar.
+        }
+      });
+    </script>
+  </body>
+</html>

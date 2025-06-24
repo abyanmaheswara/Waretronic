@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WARETRONIC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        background-color: #f4f6fa;
+        color: #333;
+        height: 100vh;
+        overflow: hidden; /* Mencegah scroll pada body jika konten utama tidak scrollable */
+        display: flex;
+      }
+      .sidebar {
+        width: 240px;
+        background: #fff;
+        height: 100vh;
+        position: fixed;
+        padding: 1rem;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+        transform: translateX(0); /* Awalnya terlihat */
+        box-sizing: border-box; /* PENTING: Memastikan padding termasuk dalam width 240px */
+      }
+      .sidebar.hidden {
+        transform: translateX(-240px); /* Menyembunyikan sidebar sejauh lebarnya */
+      }
+      .sidebar h1 {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        color: #2f80ed;
+      }
+      .sidebar a {
+        display: block;
+        padding: 0.75rem 1rem;
+        margin: 0.5rem 0;
+        color: #333;
+        text-decoration: none;
+        font-weight: 500;
+        border-radius: 6px;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        background-color: #e8f4ff;
+        color: #2f80ed;
+      }
+
+      .submenu {
+        margin-left: 1rem;
+        display: none; /* Default tersembunyi */
+        transition: max-height 0.3s ease;
+        flex-direction: column;
+      }
+
+      .submenu a {
+        font-size: 0.9rem; /* Ukuran font lebih kecil untuk submenu */
+        padding: 0.5rem 1rem; /* Padding disesuaikan */
+        margin: 0.25rem 0; /* Margin disesuaikan */
+        color: #666; /* Warna teks lebih lembut */
+      }
+
+      .submenu a:hover {
+        color: #2f80ed; /* Warna saat hover */
+      }
+
+      .submenu.show {
+        display: flex;
+      }
+
+      .main {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: 100vh;
+        padding: 2rem;
+        margin-left: 240px; /* Ruang untuk sidebar */
+        transition: margin-left 0.3s ease;
+      }
+      .main.full {
+        margin-left: 0; /* Ketika sidebar tersembunyi */
+      }
+      .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+      .menu-toggle-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .menu-toggle {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #333;
+      }
+      .top-bar h2 {
+        margin: 0;
+        font-size: 1.8rem;
+      }
+      .user-actions button,
+      .admin-button {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+      .card {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      }
+      .card h3 {
+        margin: 0.5rem 0 0.25rem;
+        font-size: 1.75rem;
+      }
+      .card strong {
+        font-size: 0.9rem;
+        color: #555;
+      }
+      .card small {
+        font-size: 0.8rem;
+        color: #777;
+      }
+      .status-warning {
+        color: #f37312;
+        font-weight: bold;
+      }
+      .status-progress {
+        color: #3498db;
+        font-weight: bold;
+      }
+      .status-blocked {
+        color: #e73c3c;
+        font-weight: bold;
+      }
+
+      .panel {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+      }
+      .panel.span-2-on-large {
+        grid-column: span 2;
+      }
+
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 1rem;
+      }
+      .panel-header span {
+        font-size: 1.1rem;
+      }
+      .panel-header a,
+      .panel-header button {
+        font-size: 0.85rem;
+        text-decoration: none;
+        color: #2f80ed;
+      }
+      .panel-header button {
+        background: #f0f0f0;
+        border: none;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-left: 0.5rem;
+      }
+      .panel-header button.active {
+        background: #3498db;
+        color: white;
+      }
+      .panel-body {
+        padding: 0;
+        flex-grow: 1;
+      }
+      .bar-container {
+        background-color: #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        height: 20px;
+        margin-bottom: 0.75rem;
+      }
+      .bar {
+        height: 100%;
+        text-align: right;
+        padding: 0 8px;
+        color: white;
+        font-size: 0.75rem;
+        line-height: 20px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .table-container {
+        width: 100%;
+        overflow-x: auto;
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .table th,
+      .table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+        white-space: nowrap;
+      }
+      .table th {
+        background: #f9fafb;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #555;
+      }
+      .table td {
+        font-size: 0.9rem;
+      }
+      .table tr:last-child td {
+        border-bottom: none;
+      }
+      .status-pill {
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: white;
+        display: inline-block;
+      }
+      .status-pill.receiving {
+        background-color: #2ecc71;
+      }
+      .status-pill.outbound {
+        background-color: #e74c3c;
+      }
+      .status-pill.transfer {
+        background-color: #bd10e0;
+      }
+      .status-pill.adjustment {
+        background-color: #f39c12;
+      }
+      .status-pill.completed {
+        background-color: #3498db;
+      }
+      .status-pill.in-transit {
+        background-color: #f1c40f;
+        color: #333;
+      }
+
+      .low-stock-alert-item {
+        background: #fff9c4;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        border-left: 4px solid #f1c40f;
+      }
+      .low-stock-alert-item.critical {
+        background: #ffe5e5;
+        border-left-color: #e74c3c;
+      }
+      .low-stock-alert-item .icon {
+        font-size: 1.2rem;
+      }
+      .low-stock-alert-item.critical .icon {
+        color: #e74c3c;
+      }
+      .low-stock-alert-item .icon {
+        color: #f1c40f;
+      }
+
+      .logo-container {
+        position: absolute;
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        text-align: center;
+      }
+
+      .logo-img {
+        max-width: 250px;
+        height: auto;
+        display: inline-block;
+      }
+
+      @media (max-width: 992px) {
+        .panel.span-2-on-large {
+          grid-column: span 1;
+        }
+        .cards-transactions-alerts {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+        .sidebar.hidden {
+          transform: translateX(-100%);
+        }
+        .sidebar:not(.hidden) {
+          transform: translateX(0);
+        }
+        .main {
+          margin-left: 0;
+          padding: 1rem;
+        }
+        .cards {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+        .top-bar h2 {
+          font-size: 1.5rem;
+        }
+        .panel-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.5rem;
+        }
+        .panel-header div {
+          margin-left: 0;
+          margin-top: 0.5rem;
+        }
+      }
+      .notification {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+      }
+
+      .notification .dot {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 10px;
+        width: 10px;
+        background-color: red;
+        border-radius: 50%;
+        border: 2px solid white;
+      }
+
+      .admin-button {
+        display: flex;
+        align-items: center;
+        background-color: #e0e0e0;
+        border-radius: 20px;
+        padding: 4px 10px 4px 4px;
+        border: none;
+      }
+
+      .admin-button .avatar {
+        background-color: #2f80ed;
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 8px;
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar" id="sidebar">
+      <h1>🔷 WARETRONIC</h1>
+      <div class="sidebar-profile">
+        <p class="sidebar-username">Admin User</p>
+        <p class="sidebar-email">admin@waretronic.com</p>
+      </div>
+
+      <a href="#" class="active">Dashboard</a>
+      <div class="sidebar-group">
+        <a href="#" class="has-submenu" onclick="toggleSubmenu(event)">Inventory ▸</a>
+        <div class="submenu">
+          <a href="masteritem.html">Master Item</a>
+          <a href="stocklevels.html">Stock Levels</a>
+        </div>
+      </div>
+      <a href="transactions.html">Transactions</a>
+      <a href="warehouses.html">Warehouses</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+      <div class="logo-container">
+        <img src="img/logo.png" alt="WARETRONIC Logo" class="logo-img" />
+      </div>
+    </div>
+
+    <div class="main" id="main">
+      <div class="top-bar">
+        <div style="display: flex; align-items: center">
+          <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+          <h2 style="margin-left: 0.5rem">Dashboard</h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem">
+          <div class="notification">
+            <img src="img/Bell_pin.svg" alt="bell" width="24" />
+            <span class="dot"></span>
+          </div>
+          <div class="dropdown">
+            <button class="admin-button" onclick="toggleDropdown()">
+              <div class="avatar">
+                <img src="img/Group 2252.svg" alt="icon" width="16" />
+              </div>
+              <span id="usernameDisplay">Admin</span>
+            </button>
+
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a href="settings.html">⚙️ Settings</a>
+              <a href="#" onclick="logout()">🚪 Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <strong>Total Items</strong>
+          <h3>0</h3>
+          <small>Compared to last month <span style="color: green">↑ 3.2%</span></small>
+        </div>
+        <div class="card">
+          <strong>Low Stock Items</strong>
+          <h3 class="status-warning">0</h3>
+          <small>Requires immediate attention</small>
+        </div>
+        <div class="card">
+          <strong>Pending Transfers</strong>
+          <h3 class="status-progress">0</h3>
+          <small>Between warehouses</small>
+        </div>
+        <div class="card">
+          <strong>Reserved Items</strong>
+          <h3 class="status-blocked">0</h3>
+          <small>Not available for use</small>
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="panel span-2-on-large" style="height: auto; min-height: 400px">
+          <div class="panel-header">
+            <span>Stock Movement Trends</span>
+            <div>
+              <button data-period="daily">Daily</button>
+              <button class="active" data-period="weekly">Weekly</button>
+              <button data-period="monthly">Monthly</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <canvas id="stockMovementChart"></canvas>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span>Warehouse Capacity</span>
+            <a href="#">View All</a>
+          </div>
+          <div class="panel-body">
+            <div id="capacityBars"></div>
+            <div style="margin-top: 1rem; background: #27ae60; color: white; padding: 4px 8px; display: inline-block; border-radius: 4px; font-size: 0.8rem">Zone Utilization</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cards cards-transactions-alerts">
+        <div class="panel span-2-on-large">
+          <div class="panel-header">
+            <span>Recent Transactions</span>
+            <a href="#">View All</a>
+          </div>
+          <div class="panel-body table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>TRANSACTION ID</th>
+                  <th>TYPE</th>
+                  <th>WAREHOUSE</th>
+                  <th>ITEMS</th>
+                  <th>DATE</th>
+                  <th>STATUS</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span>Low Stock Alerts</span>
+            <a href="#">View All</a>
+          </div>
+          <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px" id="lowStockContainer"></div>
+          <button id="restockReportBtn" style="margin-top: 10px; background: #2f80ed; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 500">Generate Restock Report</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Global variable untuk instance chart
+      let stockMovementChart;
+
+      // Fungsi utilitas untuk fetch data dengan autentikasi
+      async function fetchData(url, options = {}) {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("No authentication token found. Redirecting to login.");
+          window.location.href = "logindanregister.html";
+          return null;
+        }
+        options.headers = {
+          ...options.headers,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": options.body ? "application/json" : undefined, // Tambahkan header Content-Type jika ada body
+        };
+        try {
+          const res = await fetch(url, options);
+          if (!res.ok) {
+            if (res.status === 401 || res.status === 403) {
+              alert("Sesi kadaluarsa atau tidak berwenang. Silakan login kembali.");
+              logout();
+              return null;
+            }
+            const errorText = await res.text();
+            console.error(`HTTP error! status: ${res.status}, body: ${errorText}`);
+            throw new Error(`HTTP error! status: ${res.status} - ${errorText}`);
+          }
+          return await res.json();
+        } catch (err) {
+          console.error(`❌ Error fetching ${url}:`, err);
+          return null;
+        }
+      }
+
+      // 1. Sidebar Toggle
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const main = document.getElementById("main");
+        sidebar.classList.toggle("hidden");
+        main.classList.toggle("full");
+      }
+
+      // 2. Submenu Toggle
+      function toggleSubmenu(event) {
+        event.preventDefault();
+        const submenu = event.target.nextElementSibling;
+        const allSubmenus = document.querySelectorAll(".sidebar .submenu");
+
+        allSubmenus.forEach((sm) => {
+          if (sm !== submenu && sm.classList.contains("show")) {
+            sm.classList.remove("show");
+            const parentLink = sm.previousElementSibling;
+            if (parentLink && parentLink.classList.contains("has-submenu")) {
+              parentLink.innerHTML = parentLink.innerHTML.replace("▾", "▸");
+            }
+          }
+        });
+
+        submenu.classList.toggle("show");
+        if (submenu.classList.contains("show")) {
+          event.target.innerHTML = event.target.innerHTML.replace("▸", "▾");
+        } else {
+          event.target.innerHTML = event.target.innerHTML.replace("▾", "▸");
+        }
+      }
+
+      // 3. User Dropdown Toggle
+      function toggleDropdown() {
+        const menu = document.getElementById("dropdownMenu");
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+      }
+
+      // Tutup dropdown jika klik di luar
+      window.addEventListener("click", function (e) {
+        const dropdown = document.querySelector(".dropdown");
+        if (!dropdown.contains(e.target)) {
+          document.getElementById("dropdownMenu").style.display = "none";
+        }
+      });
+
+      // 4. Logout Function
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("username");
+        localStorage.removeItem("email");
+        window.location.href = "logindanregister.html";
+      }
+
+      // 5. Load User Info dari LocalStorage
+      function loadUserInfo() {
+        const storedUsername = localStorage.getItem("username");
+        const storedEmail = localStorage.getItem("email");
+
+        if (storedUsername) {
+          const topRightUsername = document.getElementById("usernameDisplay");
+          if (topRightUsername) topRightUsername.textContent = storedUsername;
+
+          const sidebarUsername = document.querySelector(".sidebar-username");
+          if (sidebarUsername) sidebarUsername.textContent = storedUsername;
+        }
+
+        if (storedEmail) {
+          const sidebarEmail = document.querySelector(".sidebar-email");
+          if (sidebarEmail) sidebarEmail.textContent = storedEmail;
+        }
+      }
+
+      // 6. Fetch Dashboard Cards Data
+      async function fetchDashboardCards() {
+        const totalItemsCard = document.querySelector(".card:nth-child(1) h3");
+        const lowStockCard = document.querySelector(".card:nth-child(2) h3");
+        const pendingTransfersCard = document.querySelector(".card:nth-child(3) h3");
+        const reservedItemsCard = document.querySelector(".card:nth-child(4) h3");
+
+        // Total Items
+        const items = await fetchData("http://localhost:5000/api/items");
+        if (items) {
+          totalItemsCard.innerText = items.length.toLocaleString();
+        } else {
+          totalItemsCard.innerText = "N/A";
+        }
+
+        // Low Stock Items & Reserved Items
+        const stocks = await fetchData("http://localhost:5000/api/stocks");
+        if (stocks) {
+          const lowStockCount = stocks.filter((s) => typeof s.quantity === "number" && typeof s.minimum === "number" && s.quantity < s.minimum).length;
+          lowStockCard.innerText = lowStockCount;
+
+          const reservedCount = stocks.filter((s) => typeof s.reserved === "number" && s.reserved > 0).length;
+          reservedItemsCard.innerText = reservedCount;
+        } else {
+          lowStockCard.innerText = "N/A";
+          reservedItemsCard.innerText = "N/A";
+        }
+
+        // Pending Transfers - Sesuaikan dengan endpoint BE Anda (`/api/stocktransfers`)
+        const transfers = await fetchData("http://localhost:5000/api/stocktransfers");
+        if (transfers) {
+          const pending = transfers.filter((t) => t.status && t.status.toLowerCase() === "in-transit").length;
+          pendingTransfersCard.innerText = pending;
+        } else {
+          pendingTransfersCard.innerText = "N/A";
+        }
+      }
+
+      // 7. Fetch & Render Warehouse Capacities
+      async function fetchAndRenderWarehouseCapacities() {
+        const data = await fetchData("http://localhost:5000/api/warehouses");
+        const container = document.getElementById("capacityBars");
+        if (!container || !data) return;
+
+        container.innerHTML = ""; // Clear existing bars
+
+        data.forEach((w) => {
+          const percent = typeof w.capacity_used === "number" && typeof w.capacity_total === "number" && w.capacity_total > 0 ? Math.round((w.capacity_used / w.capacity_total) * 100) : 0;
+
+          const barContainer = document.createElement("div");
+          barContainer.className = "bar-container";
+
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          bar.style.width = percent + "%";
+          bar.style.backgroundColor = percent > 80 ? "#e74c3c" : percent > 60 ? "#f39c12" : "#3498db";
+          bar.textContent = `${w.name || "Gudang"}: ${percent}%`;
+
+          barContainer.appendChild(bar);
+          container.appendChild(barContainer);
+        });
+      }
+
+      // 8. Fetch & Render Low Stock Alerts
+      async function renderLowStockAlerts() {
+        const data = await fetchData("http://localhost:5000/api/stocks");
+        const container = document.getElementById("lowStockContainer");
+        if (!container || !data) return;
+
+        container.innerHTML = ""; // Clear existing alerts
+
+        const lowStock = data.filter((item) => typeof item.quantity === "number" && typeof item.minimum === "number" && item.quantity < item.minimum);
+
+        if (lowStock.length === 0) {
+          container.innerHTML = '<p style="text-align: center; color: #555;">Tidak ada peringatan stok rendah saat ini.</p>';
+          return;
+        }
+
+        lowStock.slice(0, 3).forEach((item) => {
+          const div = document.createElement("div");
+          div.className = `low-stock-alert-item ${item.quantity < 5 ? "critical" : ""}`;
+          div.innerHTML = `
+              <span class="icon">${item.quantity < 5 ? "🚨" : "⚠️"}</span>
+              <div>
+                <strong>${item.item?.name || "Unnamed Item"}</strong><br />
+                <small>Sisa ${item.quantity} unit di ${item.warehouse?.name || "Gudang Tidak Diketahui"}</small>
+              </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+
+      // 9. Fetch & Render Recent Transactions
+      async function fetchRecentTransactions() {
+        try {
+          const transactions = await fetchData("http://localhost:5000/api/reports/recent-transactions");
+          const tbody = document.querySelector(".table tbody");
+          if (!tbody || !transactions) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Gagal memuat transaksi atau tidak ada data.</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = ""; // Clear existing rows
+
+          if (transactions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Tidak ada transaksi terbaru.</td></tr>';
+            return;
+          }
+
+          transactions.forEach((trx) => {
+            const tr = document.createElement("tr");
+            const transactionId = trx.id ? String(trx.id).slice(-4).toUpperCase() : "N/A";
+            const transactionType = trx.type ? trx.type : "Unknown";
+            const transactionWarehouse = trx.warehouse || "N/A";
+            const transactionItemsCount = trx.items || 0;
+            const transactionStatus = trx.status ? trx.status : "N/A";
+
+            let formattedDate = "N/A";
+            let formattedTime = "N/A";
+            try {
+              const transactionDate = new Date(trx.date);
+              if (!isNaN(transactionDate.getTime())) {
+                formattedDate = transactionDate.toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" });
+                formattedTime = transactionDate.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+              }
+            } catch (e) {
+              console.error("Invalid date for transaction:", trx.date, e);
+            }
+
+            tr.innerHTML = `
+              <td>#${transactionId}</td>
+              <td><span class="status-pill ${transactionType.toLowerCase()}">${transactionType}</span></td>
+              <td>${transactionWarehouse}</td>
+              <td>${transactionItemsCount}</td>
+              <td>${formattedDate}<br /><small>${formattedTime}</small></td>
+              <td><span class="status-pill ${transactionStatus.toLowerCase() === "in-transit" ? "in-transit" : "completed"}">${transactionStatus}</span></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } catch (err) {
+          console.error("❌ Failed to load transactions:", err);
+          document.querySelector(".table tbody").innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Gagal memuat transaksi.</td></tr>';
+        }
+      }
+
+      // 10. Stock Movement Chart Integration (menggunakan Chart.js)
+      async function fetchAndRenderStockMovement(period = "weekly") {
+        const chartData = await fetchData(`http://localhost:5000/api/reports/stock-movement?period=${period}`);
+        const ctx = document.getElementById("stockMovementChart");
+
+        if (!ctx || !chartData) {
+          console.warn("Chart canvas not found or no data for stock movement.");
+          if (ctx && ctx.parentNode) {
+            ctx.parentNode.innerHTML =
+              '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #aaa; background-color: #f0f0f0; border-radius: 8px;">Data chart tidak tersedia. Pastikan backend berjalan dan endpoint "/api/reports/stock-movement" mengembalikan data yang benar.</div>';
+          }
+          return;
+        }
+
+        const labels = chartData.map((d) => d.label);
+        const inboundQuantities = chartData.map((d) => d.inbound);
+        const outboundQuantities = chartData.map((d) => d.outbound);
+
+        if (stockMovementChart) {
+          stockMovementChart.destroy();
+        }
+
+        stockMovementChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Inbound Stock",
+                data: inboundQuantities,
+                borderColor: "rgb(54, 162, 235)",
+                backgroundColor: "rgba(54, 162, 235, 0.2)",
+                fill: true,
+                tension: 0.1,
+              },
+              {
+                label: "Outbound Stock",
+                data: outboundQuantities,
+                borderColor: "rgb(255, 99, 132)",
+                backgroundColor: "rgba(255, 99, 132, 0.2)",
+                fill: true,
+                tension: 0.1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+              },
+            },
+          },
+        });
+      }
+
+      // Pastikan semua inisialisasi dilakukan setelah DOM dimuat
+      document.addEventListener("DOMContentLoaded", () => {
+        // Memastikan user sudah login
+        if (!localStorage.getItem("token")) {
+          window.location.href = "logindanregister.html";
+          return; // Hentikan eksekusi script jika tidak login
+        }
+
+        loadUserInfo();
+        fetchDashboardCards();
+        fetchAndRenderWarehouseCapacities();
+        renderLowStockAlerts();
+        fetchRecentTransactions();
+        fetchAndRenderStockMovement("weekly"); // Panggil chart pertama kali dengan 'weekly'
+
+        // Event listeners untuk tombol Daily/Weekly/Monthly
+        document.querySelectorAll(".panel-header button[data-period]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            document.querySelectorAll(".panel-header button[data-period]").forEach((btn) => btn.classList.remove("active"));
+            event.target.classList.add("active");
+            const period = event.target.dataset.period;
+            fetchAndRenderStockMovement(period);
+          });
+        });
+
+        // Event listener untuk tombol Generate Restock Report
+        const restockReportBtn = document.getElementById("restockReportBtn");
+        if (restockReportBtn) {
+          restockReportBtn.addEventListener("click", async () => {
+            try {
+              // Untuk file download (blob), fetch perlu dilakukan secara terpisah tanpa parsing JSON
+              const token = localStorage.getItem("token");
+              if (!token) {
+                alert("Tidak ada token autentikasi. Silakan login kembali.");
+                logout();
+                return;
+              }
+
+              const rawResponse = await fetch("http://localhost:5000/api/reports/restock-csv", {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+
+              if (!rawResponse.ok) {
+                if (rawResponse.status === 401 || rawResponse.status === 403) {
+                  alert("Sesi kadaluarsa atau tidak berwenang saat mengunduh laporan. Silakan login kembali.");
+                  logout();
+                  return;
+                }
+                const errorText = await rawResponse.text();
+                throw new Error(`HTTP error! status: ${rawResponse.status} - ${errorText}`);
+              }
+
+              const blob = await rawResponse.blob();
+              const url = window.URL.createObjectURL(blob);
+
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "restock-report.csv";
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              window.URL.revokeObjectURL(url);
+            } catch (err) {
+              console.error("❌ Error downloading CSV:", err);
+              alert("Gagal mengunduh laporan restock: " + err.message);
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

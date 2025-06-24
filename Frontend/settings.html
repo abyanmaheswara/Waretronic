@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WARETRONIC - Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+      /* --- General Styles (Common to all pages) --- */
+      body {
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        background-color: #f4f6fa;
+        color: #333;
+        display: flex; /* Menggunakan flexbox untuk layout sidebar dan main */
+        min-height: 100vh; /* Pastikan body setidaknya setinggi viewport */
+        overflow: hidden; /* Mencegah scroll pada body */
+      }
+
+      /* --- Sidebar Styles --- */
+      .sidebar {
+        width: 240px;
+        background: #fff;
+        height: 100vh;
+        position: fixed;
+        padding: 1rem;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+        box-sizing: border-box; /* Penting untuk padding */
+        transform: translateX(0); /* Awalnya terlihat, jika tidak hidden */
+        display: flex;
+        flex-direction: column; /* Untuk menempatkan logo di bagian bawah */
+      }
+      .sidebar.hidden {
+        /* Ini akan menyembunyikan sidebar secara default jika halaman dimuat di mobile */
+        transform: translateX(-240px);
+      }
+      .sidebar h1 {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        color: #2f80ed;
+      }
+      .sidebar-profile {
+        margin-bottom: 2rem;
+        padding: 0 1rem; /* Adjust padding to match sidebar overall padding */
+      }
+      .sidebar-profile p {
+        margin: 0;
+        color: #555;
+      }
+      .sidebar-username {
+        font-weight: 600;
+        color: #333;
+      }
+      .sidebar a {
+        display: block;
+        padding: 0.75rem 1rem;
+        margin: 0.5rem 0;
+        color: #333;
+        text-decoration: none;
+        font-weight: 500;
+        border-radius: 6px;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        background-color: #e8f4ff;
+        color: #2f80ed;
+      }
+      .submenu {
+        margin-left: 1rem;
+        display: none;
+        flex-direction: column;
+        transition: max-height 0.3s ease; /* Tambahkan transisi */
+      }
+      .submenu a {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem 0;
+        color: #666;
+      }
+      .submenu a:hover {
+        color: #2f80ed;
+      }
+      .submenu.show {
+        display: flex;
+        max-height: 200px; /* Atur max-height agar transisi terlihat */
+      }
+      .logo-container {
+        margin-top: auto; /* Mendorong logo ke bawah */
+        padding-top: 1rem;
+        text-align: center;
+      }
+      .logo-img {
+        max-width: 180px; /* Sesuaikan ukuran logo jika perlu */
+        height: auto;
+        opacity: 0.9;
+      }
+
+      /* --- Main Content Area Styles --- */
+      .main {
+        flex: 1; /* Mengisi sisa ruang */
+        margin-left: 240px; /* Ruang untuk sidebar */
+        padding: 2rem;
+        transition: margin-left 0.3s ease;
+        overflow-y: auto; /* Izinkan scroll di konten utama */
+        height: 100vh; /* Pastikan main content setinggi viewport */
+        box-sizing: border-box; /* Termasuk padding dalam tinggi */
+      }
+      .main.full {
+        margin-left: 0;
+      }
+
+      /* --- Top Bar Styles --- */
+      .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+      }
+      .menu-toggle {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #333;
+      }
+      .top-bar h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        color: #333;
+      }
+      .top-right-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .notification {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+      }
+      .notification .dot {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 10px;
+        width: 10px;
+        background-color: red;
+        border-radius: 50%;
+        border: 2px solid white;
+      }
+      .admin-button {
+        display: flex;
+        align-items: center;
+        background-color: #e0e0e0;
+        border-radius: 20px;
+        padding: 4px 10px 4px 4px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        color: #333;
+      }
+      .admin-button .avatar {
+        background-color: #2f80ed;
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 8px;
+        font-size: 0.8rem;
+      }
+      .dropdown-menu {
+        display: none;
+        position: absolute;
+        background-color: #fff;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+        border-radius: 8px;
+        right: 0; /* Posisikan ke kanan tombol */
+        top: 100%; /* Di bawah tombol */
+        margin-top: 5px;
+      }
+      .dropdown-menu a {
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        font-weight: normal;
+        border-radius: 8px; /* Sudut membulat untuk item menu */
+      }
+      .dropdown-menu a:hover {
+        background-color: #f1f1f1;
+      }
+
+      /* --- Panel & Table Styles --- */
+      .panel {
+        background: #fff;
+        padding: 1.5rem; /* Tambah padding */
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Tambah shadow */
+        margin-bottom: 1rem;
+      }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center; /* Pusat vertikal */
+        font-weight: 600;
+        padding-bottom: 1rem; /* Tambah padding bawah */
+        border-bottom: 1px solid #eee; /* Tambah garis bawah */
+        margin-bottom: 1rem;
+      }
+      .panel-header h3 {
+        margin: 0; /* Hapus margin default h3 */
+        font-size: 1.5rem; /* Ukuran lebih besar */
+      }
+      .panel-header button {
+        padding: 0.6rem 1.2rem; /* Ukuran tombol lebih baik */
+        border-radius: 8px; /* Lebih membulat */
+        font-weight: 600;
+        transition: background-color 0.2s ease;
+      }
+      .panel-header button:hover {
+        opacity: 0.9;
+      }
+
+      /* --- User Table Specific Styles --- */
+      .search-filter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 1rem 0;
+        flex-wrap: wrap;
+        gap: 0.75rem; /* Increased gap */
+      }
+      .search-filter input[type="text"],
+      .search-filter select {
+        flex: 1;
+        padding: 0.75rem; /* Increased padding */
+        border-radius: 6px; /* Slightly larger border radius */
+        border: 1px solid #ddd; /* Softer border */
+        font-family: "Inter", sans-serif;
+        font-size: 0.9rem;
+      }
+      .search-filter button {
+        background-color: #2f80ed; /* Consistent blue for action buttons */
+        color: white;
+        padding: 0.75rem 1.25rem; /* Increased padding */
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.2s ease;
+      }
+      .search-filter button:hover {
+        background-color: #2563eb;
+      }
+
+      .table-container {
+        overflow-x: auto; /* For horizontal scroll on small screens */
+        border-radius: 8px; /* Rounded corners for the table container */
+        border: 1px solid #eee; /* Light border around the table */
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        background: #fff;
+      }
+
+      .table thead {
+        background-color: #f9fafb; /* Lighter header background */
+        text-align: left;
+      }
+
+      .table th,
+      .table td {
+        padding: 0.9rem 1.2rem; /* More generous padding */
+        border-bottom: 1px solid #f0f0f0; /* Lighter border lines */
+        white-space: nowrap;
+      }
+
+      .table th {
+        font-weight: 600;
+        color: #555;
+        text-transform: uppercase; /* Uppercase table headers */
+      }
+
+      .table tbody tr:hover {
+        background-color: #fcfcfc;
+      }
+
+      .table tbody tr:last-child td {
+        border-bottom: none; /* No border for the last row */
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 0.3rem 0.75rem; /* More padding */
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 6px;
+        text-transform: capitalize; /* Capitalize status text */
+      }
+
+      .status-active {
+        background-color: #d1fae5; /* Light green */
+        color: #10b981; /* Dark green */
+      }
+
+      .status-inactive {
+        background-color: #ffe5e5; /* Light red */
+        color: #e73c3c; /* Dark red */
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+      }
+
+      .user-avatar {
+        display: inline-flex; /* Use flex for centering content */
+        align-items: center;
+        justify-content: center;
+        width: 36px; /* Larger avatar */
+        height: 36px; /* Larger avatar */
+        border-radius: 50%;
+        font-size: 0.85rem; /* Larger font size */
+        font-weight: 600;
+        color: white;
+        margin-right: 0.75rem; /* More margin */
+        flex-shrink: 0; /* Prevent shrinking */
+      }
+
+      /* Color classes for avatars (you can add more) */
+      .avatar-purple {
+        background-color: #9b59b6;
+      }
+      .avatar-green {
+        background-color: #2ecc71;
+      }
+      .avatar-blue {
+        background-color: #3498db;
+      }
+      .avatar-orange {
+        background-color: #f39c12;
+      }
+      .avatar-red {
+        background-color: #e74c3c;
+      }
+
+      .actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .actions button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #666; /* Softer color for icons */
+        font-size: 1.1rem; /* Larger icons */
+        transition: color 0.2s ease;
+      }
+
+      .actions button:hover {
+        color: #2f80ed;
+      }
+      .actions button.delete-action:hover {
+        color: #e74c3c;
+      }
+      .actions button.password-action:hover {
+        color: #f39c12;
+      }
+
+      .pagination-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1.5rem;
+      }
+      .pagination-info {
+        font-size: 0.9rem;
+        color: #666;
+      }
+      .pagination-buttons {
+        display: flex;
+        gap: 0.25rem;
+      }
+      .pagination-buttons button {
+        padding: 0.5rem 0.8rem; /* More padding */
+        border: 1px solid #ddd;
+        background-color: #fff;
+        cursor: pointer;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      }
+      .pagination-buttons button:hover:not(.active) {
+        background-color: #f0f0f0;
+        border-color: #ccc;
+      }
+      .pagination-buttons button.active {
+        background-color: #2f80ed;
+        color: white;
+        border-color: #2f80ed;
+      }
+      .pagination-buttons button:disabled {
+        background-color: #f9fafb;
+        color: #ccc;
+        cursor: not-allowed;
+        border-color: #eee;
+      }
+
+      /* --- Modal Styles (for Add/Edit User) --- */
+      .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1001; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity */
+        justify-content: center;
+        align-items: center;
+        padding: 1rem; /* Padding agar modal tidak menempel di tepi layar kecil */
+        box-sizing: border-box;
+      }
+      .modal-content {
+        background-color: #fefefe;
+        padding: 30px; /* Lebih banyak padding */
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4); /* Shadow lebih gelap */
+        width: 90%;
+        max-width: 500px; /* Lebar max lebih besar */
+        position: relative;
+        animation-name: animatetop;
+        animation-duration: 0.4s;
+      }
+      @keyframes animatetop {
+        from {
+          top: -300px;
+          opacity: 0;
+        }
+        to {
+          top: 0;
+          opacity: 1;
+        }
+      }
+      .close-button {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.2s ease;
+      }
+      .close-button:hover,
+      .close-button:focus {
+        color: #333;
+      }
+      .modal h3 {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        color: #2f80ed;
+        font-size: 1.8rem; /* Ukuran judul modal */
+        text-align: center;
+      }
+      .modal form label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #555;
+        font-size: 0.95rem;
+      }
+      .modal form input[type="text"],
+      .modal form input[type="email"],
+      .modal form input[type="password"],
+      .modal form select {
+        width: 100%;
+        padding: 12px; /* Padding lebih besar */
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-family: "Inter", sans-serif;
+        font-size: 0.95rem;
+        box-sizing: border-box; /* Pastikan padding termasuk dalam width */
+      }
+      .modal form button {
+        background: #2ecc71;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: background-color 0.2s ease;
+        margin-right: 0.5rem; /* Jarak antar tombol */
+      }
+      .modal form button:hover {
+        background-color: #27ae60;
+      }
+      .modal form button.cancel {
+        background: #ccc;
+        color: #333;
+      }
+      .modal form button.cancel:hover {
+        background-color: #bbb;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-240px);
+        }
+        .sidebar:not(.hidden) {
+          transform: translateX(0);
+        }
+        .main {
+          margin-left: 0;
+          padding: 1rem;
+        }
+        .top-bar {
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+        .top-bar h2 {
+          order: -1; /* Move title to top */
+          width: 100%;
+          text-align: center;
+          margin-bottom: 1rem;
+        }
+        .top-right-actions {
+          width: 100%;
+          justify-content: center;
+        }
+        .search-filter {
+          flex-direction: column; /* Stack filter items vertically */
+          align-items: stretch; /* Stretch items to full width */
+        }
+        .search-filter input[type="text"],
+        .search-filter select,
+        .search-filter button {
+          width: 100%;
+          margin-bottom: 0.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar" id="sidebar">
+      <h1>🔷 WARETRONIC</h1>
+      <div class="sidebar-profile">
+        <p class="sidebar-username">Admin User</p>
+        <p class="sidebar-email">admin@waretronic.com</p>
+      </div>
+      <a href="index.html">Dashboard</a>
+      <div class="sidebar-group">
+        <a href="#" class="has-submenu" onclick="toggleSubmenu(event)">Inventory ▸</a>
+        <div class="submenu">
+          <a href="masteritem.html">Master Item</a>
+          <a href="stocklevels.html">Stock Levels</a>
+        </div>
+      </div>
+      <a href="transactions.html">Transactions</a>
+      <a href="warehouses.html">Warehouses</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html" class="active">Settings</a>
+      <div class="logo-container">
+        <img src="img/logo.png" alt="WARETRONIC Logo" class="logo-img" />
+      </div>
+    </div>
+
+    <div class="main" id="main">
+      <div class="top-bar">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <h2 style="margin-left: 0.5rem">Settings</h2>
+        <div class="top-right-actions">
+          <div class="notification">
+            <img src="img/Bell_pin.svg" alt="bell" width="24" />
+            <span class="dot"></span>
+          </div>
+          <div class="dropdown">
+            <button class="admin-button" onclick="toggleDropdown()">
+              <div class="avatar">
+                <img src="img/Group 2252.svg" alt="icon" width="16" />
+              </div>
+              <span id="usernameDisplay">Admin</span>
+            </button>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a href="settings.html">⚙️ Settings</a>
+              <a href="#" onclick="logout()">🚪 Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3>User Management <span id="userCount" style="font-size: 0.75rem; color: #666">0 users</span></h3>
+          <div>
+            <button id="add-user-btn">+ Add User</button>
+          </div>
+        </div>
+
+        <div class="search-filter">
+          <input type="text" id="user-search" placeholder="Search users by name or email..." />
+          <select id="user-role-filter">
+            <option value="">All Roles</option>
+          </select>
+          <select id="user-status-filter">
+            <option value="">All Status</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+          <button id="apply-user-filters">Apply Filters</button>
+        </div>
+
+        <div class="table-container">
+          <table class="table" id="user-table">
+            <thead>
+              <tr>
+                <th>NAME</th>
+                <th>EMAIL</th>
+                <th>ROLE</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="pagination-controls">
+          <p class="pagination-info" id="user-pagination-info">Showing 0 to 0 of 0 results</p>
+          <div class="pagination-buttons">
+            <button id="user-prev-page">Previous</button>
+            <span id="user-page-numbers"></span>
+            <button id="user-next-page">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="user-modal" class="modal">
+        <div class="modal-content">
+          <span class="close-button" onclick="closeUserModal()">&times;</span>
+          <h3 id="user-modal-title">Add New User</h3>
+          <form id="user-form">
+            <input type="hidden" id="user-id" />
+
+            <label for="username">Username:</label>
+            <input type="text" id="username" required autocomplete="new-username" />
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" required autocomplete="new-email" />
+
+            <label for="password" id="password-label">Password:</label>
+            <input type="password" id="password" autocomplete="new-password" />
+            <small id="password-hint" style="color: #666; font-size: 0.85rem; display: block; margin-top: -0.5rem; margin-bottom: 0.5rem">Abaikan jika tidak ingin mengubah password (mode edit).</small>
+
+            <label for="role">Role:</label>
+            <select id="role" required>
+              <option value="System Admin">System Admin</option>
+              <option value="Warehouse Admin">Warehouse Admin</option>
+              <option value="Staf Ahli">Staf Ahli</option>
+            </select>
+
+            <label for="is-active">Status:</label>
+            <select id="is-active">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+
+            <button type="submit">Save User</button>
+            <button type="button" class="cancel" onclick="closeUserModal()">Cancel</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- Global Variables ---
+      let allUsers = [];
+      let filteredUsers = [];
+      let currentUserPage = 1;
+      const usersPerPage = 10; // Number of users per page
+
+      // --- DOMContentLoaded Initialization ---
+      document.addEventListener("DOMContentLoaded", () => {
+        // Authentication Check
+        if (!localStorage.getItem("token")) {
+          alert("You are not logged in. Please log in first.");
+          window.location.href = "loginandregister.html";
+          return;
+        }
+
+        // Initial UI and Data Load
+        loadUserInfo(); // Load username and email in sidebar/top-bar
+        loadUsers(); // Fetch and display users
+        initEventListeners(); // Set up all general event listeners
+
+        // Ensure sidebar is visible by default for this page
+        const sidebar = document.getElementById("sidebar");
+        const main = document.getElementById("main");
+        sidebar.classList.remove("hidden");
+        main.classList.remove("full");
+      });
+
+      // --- Universal Fetch Data Utility (with Auth & Error Handling) ---
+      async function fetchData(url, options = {}) {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("No authentication token found. Redirecting to login.");
+          window.location.href = "loginandregister.html";
+          return null;
+        }
+        options.headers = {
+          ...options.headers,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": options.body ? "application/json" : undefined,
+        };
+        try {
+          const res = await fetch(url, options);
+          if (!res.ok) {
+            if (res.status === 401 || res.status === 403) {
+              alert("Session expired or unauthorized. Please log in again.");
+              logout();
+              return null;
+            }
+            const errorText = await res.text();
+            console.error(`HTTP error! status: ${res.status}, body: ${errorText}`);
+            throw new Error(`HTTP error! status: ${res.status} - ${errorText}`);
+          }
+          return await res.json();
+        } catch (err) {
+          console.error(`❌ Error fetching ${url}:`, err);
+          alert("An error occurred: " + err.message);
+          return null;
+        }
+      }
+
+      // --- Logout Function ---
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("username");
+        localStorage.removeItem("email");
+        window.location.href = "loginandregister.html";
+      }
+
+      // --- Sidebar & Dropdown Toggle Functions ---
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const main = document.getElementById("main");
+        sidebar.classList.toggle("hidden");
+        main.classList.toggle("full");
+      }
+
+      function toggleSubmenu(event) {
+        event.preventDefault();
+        const submenu = event.target.nextElementSibling;
+        const allSubmenus = document.querySelectorAll(".sidebar .submenu");
+
+        allSubmenus.forEach((sm) => {
+          if (sm !== submenu && sm.classList.contains("show")) {
+            sm.classList.remove("show");
+            const parentLink = sm.previousElementSibling;
+            if (parentLink && parentLink.classList.contains("has-submenu")) {
+              parentLink.innerHTML = parentLink.innerHTML.replace("▾", "▸");
+            }
+          }
+        });
+
+        submenu.classList.toggle("show");
+        if (submenu.classList.contains("show")) {
+          event.target.innerHTML = event.target.innerHTML.replace("▸", "▾");
+        } else {
+          event.target.innerHTML = event.target.innerHTML.replace("▾", "▸");
+        }
+      }
+
+      function toggleDropdown() {
+        const menu = document.getElementById("dropdownMenu");
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+      }
+
+      window.addEventListener("click", function (e) {
+        const dropdown = document.querySelector(".dropdown");
+        if (dropdown && !dropdown.contains(e.target)) {
+          document.getElementById("dropdownMenu").style.display = "none";
+        }
+      });
+
+      // --- Load User Info (from localStorage) ---
+      function loadUserInfo() {
+        const storedUsername = localStorage.getItem("username");
+        const storedEmail = localStorage.getItem("email");
+
+        if (storedUsername) {
+          document.getElementById("usernameDisplay").textContent = storedUsername;
+          document.querySelector(".sidebar-username").textContent = storedUsername;
+        }
+        if (storedEmail) {
+          document.querySelector(".sidebar-email").textContent = storedEmail;
+        }
+      }
+
+      // --- User Management Functionality ---
+      async function loadUsers() {
+        const userTableBody = document.querySelector("#user-table tbody");
+        const userCountSpan = document.getElementById("userCount");
+        userTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Loading users...</td></tr>';
+        userCountSpan.textContent = "Loading...";
+
+        const users = await fetchData("http://localhost:5000/api/auth/users"); // <-- Tambahkan '/auth' di sini
+        if (users) {
+          allUsers = users;
+          applyUserFiltersAndSearch();
+          populateRoleFilter(users); // Populate role filter dropdown
+        } else {
+          userTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Failed to load users.</td></tr>';
+          userCountSpan.textContent = "0 users";
+          allUsers = [];
+          filteredUsers = [];
+          renderUserPagination();
+        }
+      }
+
+      function populateRoleFilter(users) {
+        const roleFilter = document.getElementById("user-role-filter");
+        const roles = new Set(users.map((user) => user.role).filter(Boolean)); // Get unique roles
+
+        roleFilter.innerHTML = '<option value="">All Roles</option>';
+        roles.forEach((role) => {
+          const option = document.createElement("option");
+          option.value = role;
+          option.textContent = role;
+          roleFilter.appendChild(option);
+        });
+      }
+
+      function applyUserFiltersAndSearch() {
+        const searchTerm = document.getElementById("user-search").value.toLowerCase();
+        const selectedRole = document.getElementById("user-role-filter").value;
+        const selectedStatus = document.getElementById("user-status-filter").value;
+
+        filteredUsers = allUsers.filter((user) => {
+          const matchesSearch = (user.username && user.username.toLowerCase().includes(searchTerm)) || (user.email && user.email.toLowerCase().includes(searchTerm));
+          const matchesRole = selectedRole === "" || user.role === selectedRole;
+          const matchesStatus = selectedStatus === "" || String(user.isActive) === selectedStatus;
+
+          return matchesSearch && matchesRole && matchesStatus;
+        });
+
+        currentUserPage = 1; // Reset to first page after applying filters
+        renderUsersTable();
+        renderUserPagination();
+      }
+
+      function getUserAvatarColor(username) {
+        const colors = ["purple", "green", "blue", "orange", "red"];
+        // Simple hash function to get a consistent color for each user
+        let hash = 0;
+        for (let i = 0; i < username.length; i++) {
+          hash = username.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const index = Math.abs(hash) % colors.length;
+        return `avatar-${colors[index]}`;
+      }
+
+      function getInitials(username) {
+        if (!username) return "";
+        const parts = username.split(" ");
+        if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+        return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+      }
+
+      function renderUsersTable() {
+        const userTableBody = document.querySelector("#user-table tbody");
+        userTableBody.innerHTML = "";
+
+        const startIndex = (currentUserPage - 1) * usersPerPage;
+        const endIndex = startIndex + usersPerPage;
+        const usersToDisplay = filteredUsers.slice(startIndex, endIndex);
+
+        if (usersToDisplay.length > 0) {
+          usersToDisplay.forEach((user) => {
+            const row = userTableBody.insertRow();
+            const avatarClass = getUserAvatarColor(user.username);
+            const initials = getInitials(user.username);
+            const isActiveStatus = user.isActive ? "Active" : "Inactive";
+            const isActiveBadgeClass = user.isActive ? "status-active" : "status-inactive";
+
+            row.innerHTML = `
+            <td>
+                <div class="user-info">
+                    <span class="user-avatar ${avatarClass}">${initials}</span>
+                    <span>${user.username || "N/A"}</span>
+                </div>
+            </td>
+            <td>${user.email || "N/A"}</td>
+            <td>${user.role || "N/A"}</td>
+            <td><span class="status-badge ${isActiveBadgeClass}">${isActiveStatus}</span></td>
+            <td class="actions">
+                <button class="password-action" onclick="resetUserPassword('${user._id}')" title="Reset Password">🔒</button>
+                <button onclick="openEditUserModal('${user._id}')" title="Edit User">✏</button>
+                <button class="delete-action" onclick="deleteUser('${user._id}')" title="Delete User">❌</button>
+            </td>
+          `;
+          });
+        } else {
+          userTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">No users found.</td></tr>';
+        }
+        document.getElementById("userCount").textContent = `${filteredUsers.length} users`;
+        renderUserPagination();
+      }
+
+      function renderUserPagination() {
+        const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+        const pageNumbersContainer = document.getElementById("user-page-numbers");
+        const paginationInfo = document.getElementById("user-pagination-info");
+
+        pageNumbersContainer.innerHTML = "";
+        paginationInfo.textContent = `Showing ${Math.min(filteredUsers.length, (currentUserPage - 1) * usersPerPage + 1)} to ${Math.min(filteredUsers.length, currentUserPage * usersPerPage)} of ${filteredUsers.length} results`;
+
+        if (totalPages > 1) {
+          for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement("button");
+            btn.textContent = i;
+            btn.classList.add("page-btn");
+            if (i === currentUserPage) {
+              btn.classList.add("active");
+            }
+            btn.onclick = () => {
+              currentUserPage = i;
+              renderUsersTable();
+            };
+            pageNumbersContainer.appendChild(btn);
+          }
+        }
+
+        document.getElementById("user-prev-page").disabled = currentUserPage === 1;
+        document.getElementById("user-next-page").disabled = currentUserPage === totalPages || totalPages === 0;
+        document.getElementById("user-prev-page").onclick = () => {
+          if (currentUserPage > 1) {
+            currentUserPage--;
+            renderUsersTable();
+          }
+        };
+        document.getElementById("user-next-page").onclick = () => {
+          if (currentUserPage < totalPages) {
+            currentUserPage++;
+            renderUsersTable();
+          }
+        };
+      }
+
+      // --- User Modal Functions ---
+      function openAddUserModal() {
+        document.getElementById("user-modal-title").textContent = "Add New User";
+        document.getElementById("user-form").reset();
+        document.getElementById("user-id").value = "";
+        // Show password field and make it required for new user
+        document.getElementById("password").required = true;
+        document.getElementById("password").style.display = "block";
+        document.getElementById("password-label").style.display = "block";
+        document.getElementById("password-hint").style.display = "none"; // Hide hint for new user
+        document.getElementById("user-modal").style.display = "flex";
+      }
+
+      async function openEditUserModal(id) {
+        document.getElementById("user-modal-title").textContent = "Edit User";
+        document.getElementById("user-id").value = id;
+        document.getElementById("password").required = false; // Not required for edit
+        document.getElementById("password").style.display = "block"; // Ensure it's visible
+        document.getElementById("password-label").style.display = "block";
+        document.getElementById("password-hint").style.display = "block"; // Show hint for edit
+
+        const user = await fetchData(`http://localhost:5000/api/users/${id}`);
+        if (user) {
+          document.getElementById("username").value = user.username || "";
+          document.getElementById("email").value = user.email || "";
+          document.getElementById("role").value = user.role || "";
+          document.getElementById("is-active").value = String(user.isActive); // Boolean to string
+          document.getElementById("user-modal").style.display = "flex";
+        } else {
+          alert("Failed to load user details.");
+          closeUserModal();
+        }
+      }
+
+      function closeUserModal() {
+        document.getElementById("user-modal").style.display = "none";
+        document.getElementById("user-form").reset();
+        document.getElementById("user-id").value = "";
+      }
+
+      document.getElementById("user-form").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const userId = document.getElementById("user-id").value;
+        const username = document.getElementById("username").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const role = document.getElementById("role").value;
+        const isActive = document.getElementById("is-active").value === "true";
+
+        // Basic validation
+        if (!username || !email || !role) {
+          alert("Username, Email, and Role are required.");
+          return;
+        }
+
+        let userData = { username, email, role, isActive };
+        let url;
+        let method;
+
+        if (userId) {
+          // Edit existing user (PUT)
+          url = `http://localhost:5000/api/users/${userId}`;
+          method = "PUT";
+          if (password) {
+            // Only send password if it's provided during edit
+            userData.password = password;
+          }
+        } else {
+          // Add new user (POST to register endpoint)
+          url = "http://localhost:5000/api/auth/register"; // Assuming this handles user creation by admin
+          method = "POST";
+          if (!password) {
+            alert("Password is required for new users.");
+            return;
+          }
+          userData.password = password;
+        }
+
+        const result = await fetchData(url, {
+          method: method,
+          body: JSON.stringify(userData),
+        });
+
+        if (result) {
+          alert(`User successfully ${userId ? "updated" : "added"}!`);
+          closeUserModal();
+          loadUsers(); // Refresh user list
+        } else {
+          alert(`Failed to ${userId ? "update" : "add"} user.`);
+        }
+      });
+
+      async function deleteUser(id) {
+        if (confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+          const result = await fetchData(`http://localhost:5000/api/users/${id}`, { method: "DELETE" });
+          if (result) {
+            alert("User successfully deleted!");
+            loadUsers(); // Refresh user list
+          } else {
+            alert("Failed to delete user.");
+          }
+        }
+      }
+
+      async function resetUserPassword(id) {
+        if (confirm("Are you sure you want to reset this user's password? A temporary password will be set (or they will be prompted to reset).")) {
+          // This endpoint might send a temporary password or a reset link.
+          // Adjust URL and method based on your backend's implementation for password reset by admin.
+          const result = await fetchData(`http://localhost:5000/api/users/${id}/reset-password`, {
+            method: "PUT", // Or POST, depending on your API
+            body: JSON.stringify({
+              /* optional: new_temp_password */
+            }),
+          });
+
+          if (result) {
+            alert("User password reset initiated. User might need to check their email or use a temporary password.");
+            // Optionally refresh users if status changes (e.g., pending password change)
+            loadUsers();
+          } else {
+            alert("Failed to reset user password.");
+          }
+        }
+      }
+
+      // --- General Event Listeners Setup ---
+      function initEventListeners() {
+        // Sidebar and Dropdown from previous pages
+        // These are defined in global scope due to direct onclick attributes in HTML
+        // (toggleSidebar, toggleSubmenu, toggleDropdown, logout)
+
+        // User Management specific event listeners
+        document.getElementById("add-user-btn").addEventListener("click", openAddUserModal);
+        document.getElementById("apply-user-filters").addEventListener("click", applyUserFiltersAndSearch);
+
+        document.getElementById("user-search").addEventListener("keyup", (event) => {
+          if (event.key === "Enter") {
+            applyUserFiltersAndSearch();
+          }
+        });
+        document.getElementById("user-role-filter").addEventListener("change", applyUserFiltersAndSearch);
+        document.getElementById("user-status-filter").addEventListener("change", applyUserFiltersAndSearch);
+
+        // Ensure Inventory submenu is open and active if current page is part of it
+        const inventorySubmenuLink = document.querySelector(".sidebar-group .has-submenu");
+        const inventorySubmenu = document.querySelector(".sidebar-group .submenu");
+        if (inventorySubmenuLink && inventorySubmenu) {
+          inventorySubmenu.classList.add("show");
+          inventorySubmenuLink.innerHTML = inventorySubmenuLink.innerHTML.replace("▸", "▾"); // Change arrow to down
+          // Check if current page is masteritem.html or stocklevels.html
+          if (window.location.pathname.includes("masteritem.html") || window.location.pathname.includes("stocklevels.html")) {
+            inventorySubmenuLink.classList.add("active"); // Activate parent Inventory link
+          }
+        }
+      }
+    </script>
+  </body>
+</html>
